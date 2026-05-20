@@ -1,17 +1,21 @@
 .home {
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
   background-color: #bfbfbfe3;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding-top: 100px;
+  padding-left: 20px;
+  padding-right: 20px;
   font-family: Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 .content {
   text-align: center;
   width: 100%;
+  max-width: 1400px;
 }
 
 .subtitle {
@@ -24,11 +28,13 @@
   color: black;
   font-size: 100px;
   font-weight: bold;
+  line-height: 1;
 }
 
 .stay {
   color: #333;
   font-size: 40px;
+  margin-top: 20px;
   margin-bottom: 60px;
 }
 
@@ -38,6 +44,7 @@
   align-items: center;
   gap: 50px;
   margin-top: 30px;
+  flex-wrap: wrap;
 }
 
 .battle-image {
@@ -45,11 +52,109 @@
   height: 300px;
   object-fit: cover;
   border-radius: 20px;
-  box-shadow: 0px 5px 20px rgba(0,0,0,0.3);
+  box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.battle-image:hover {
+  transform: scale(1.05);
 }
 
 .vs-text {
   font-size: 60px;
   font-weight: bold;
   color: black;
+}
+
+/* ========================= */
+/* Laptop / Tablet */
+/* ========================= */
+
+@media (max-width: 992px) {
+  .title {
+    font-size: 80px;
+  }
+
+  .subtitle {
+    font-size: 40px;
+  }
+
+  .stay {
+    font-size: 32px;
+  }
+
+  .battle-image {
+    width: 250px;
+    height: 250px;
+  }
+
+  .vs-text {
+    font-size: 50px;
+  }
+}
+
+/* ========================= */
+/* Mobile Responsive */
+/* ========================= */
+
+@media (max-width: 768px) {
+  .home {
+    padding-top: 60px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .subtitle {
+    font-size: 28px;
+  }
+
+  .title {
+    font-size: 52px;
+  }
+
+  .stay {
+    font-size: 24px;
+    margin-bottom: 35px;
+  }
+
+  .vs-section {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .battle-image {
+    width: 220px;
+    height: 220px;
+  }
+
+  .vs-text {
+    font-size: 40px;
+  }
+}
+
+/* ========================= */
+/* Small Phones */
+/* ========================= */
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 42px;
+  }
+
+  .subtitle {
+    font-size: 24px;
+  }
+
+  .stay {
+    font-size: 20px;
+  }
+
+  .battle-image {
+    width: 180px;
+    height: 180px;
+  }
+
+  .vs-text {
+    font-size: 32px;
+  }
 }
