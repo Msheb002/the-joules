@@ -1,0 +1,789 @@
+/* ===================================================== */
+/* ==================== GAMES PAGE ===================== */
+/* ===================================================== */
+
+.games-page {
+  min-height: 100vh;
+  width: 100%;
+
+  background: linear-gradient(135deg, #bfbfbf, #8f8f8f);
+
+  padding: 70px 30px 120px;
+
+  font-family: Arial, sans-serif;
+
+  position: relative;
+
+  overflow-x: hidden;
+}
+
+/* ===================================================== */
+/* ====================== CONTENT ====================== */
+/* ===================================================== */
+
+.games-content {
+  width: 100%;
+  max-width: 1250px;
+
+  margin: 0 auto;
+
+  text-align: center;
+}
+
+/* ===================================================== */
+/* ======================= TITLE ======================= */
+/* ===================================================== */
+
+.games-title {
+  margin: 0 0 15px;
+
+  color: #111111;
+
+  font-size: 70px;
+  font-weight: 900;
+}
+
+/* ===================================================== */
+/* ===================== SUBTITLE ====================== */
+/* ===================================================== */
+
+.games-subtitle {
+  margin: 0 0 55px;
+
+  color: #333333;
+
+  font-size: 25px;
+  font-weight: 700;
+}
+
+/* ===================================================== */
+/* ===================== GAMES GRID ==================== */
+/* ===================================================== */
+
+.games-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+
+  gap: 35px;
+
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* ===================================================== */
+/* ====================== GAME CARD ==================== */
+/* ===================================================== */
+
+.game-card {
+  width: 100%;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 26px;
+
+  background: rgba(20, 20, 20, 0.9);
+
+  overflow: hidden;
+
+  cursor: pointer;
+
+  font-family: inherit;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-10px) scale(1.02);
+
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+}
+
+.game-card:focus-visible {
+  outline: 4px solid #ffd166;
+  outline-offset: 5px;
+}
+
+/* ===================================================== */
+/* ===================== CARD IMAGE ==================== */
+/* ===================================================== */
+
+.game-card-image {
+  display: block;
+
+  width: 100%;
+  height: 260px;
+
+  object-fit: cover;
+}
+
+/* ===================================================== */
+/* ================= ALL TYPES IMAGES ================== */
+/* ===================================================== */
+
+.all-types-images {
+  width: 100%;
+  height: 260px;
+
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+
+  overflow: hidden;
+}
+
+.all-types-images img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+/* ===================================================== */
+/* ==================== CARD NAME ====================== */
+/* ===================================================== */
+
+.game-card-name {
+  min-height: 90px;
+
+  padding: 20px 15px;
+
+  color: #ffd166;
+
+  font-size: 22px;
+  font-weight: 900;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ===================================================== */
+/* ==================== BACK BUTTON ==================== */
+/* ===================================================== */
+
+.games-back-button {
+  position: fixed;
+
+  left: 25px;
+  bottom: 25px;
+
+  width: 60px;
+  height: 60px;
+
+  border-radius: 50%;
+
+  background: rgba(20, 20, 20, 0.92);
+  color: #ffd166;
+
+  text-decoration: none;
+
+  font-size: 34px;
+  font-weight: 900;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s ease;
+
+  z-index: 900;
+}
+
+.games-back-button:hover {
+  background: #ffd166;
+  color: #111111;
+
+  transform: translateX(-5px);
+}
+
+/* ===================================================== */
+/* ==================== MODAL OVERLAY ================== */
+/* ===================================================== */
+
+.name-modal-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.72);
+
+  backdrop-filter: blur(7px);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 2000;
+}
+
+/* ===================================================== */
+/* ====================== NAME MODAL =================== */
+/* ===================================================== */
+
+.name-modal {
+  width: 100%;
+  max-width: 500px;
+
+  padding: 42px 38px 38px;
+
+  background: #1c1c1c;
+
+  border: 2px solid rgba(255, 209, 102, 0.75);
+  border-radius: 28px;
+
+  color: #ffffff;
+
+  text-align: center;
+
+  position: relative;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+
+  animation: modalAppear 0.25s ease;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(25px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===================================================== */
+/* ================= MODAL CLOSE BUTTON ================ */
+/* ===================================================== */
+
+.modal-close-button {
+  position: absolute;
+
+  top: 14px;
+  right: 17px;
+
+  width: 42px;
+  height: 42px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+
+  font-size: 29px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.modal-close-button:hover {
+  background: #ffd166;
+  color: #111111;
+
+  transform: rotate(90deg);
+}
+
+/* ===================================================== */
+/* =================== MODAL CONTENT =================== */
+/* ===================================================== */
+
+.modal-game-title {
+  display: inline-block;
+
+  margin-bottom: 18px;
+
+  padding: 9px 16px;
+
+  background: rgba(255, 209, 102, 0.13);
+
+  border: 1px solid rgba(255, 209, 102, 0.45);
+  border-radius: 30px;
+
+  color: #ffd166;
+
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.name-modal h2 {
+  margin: 0 0 12px;
+
+  color: #ffd166;
+
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.name-modal p {
+  margin: 0 0 27px;
+
+  color: #d3d3d3;
+
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+/* ===================================================== */
+/* ====================== MODAL FORM =================== */
+/* ===================================================== */
+
+.name-modal form {
+  text-align: left;
+}
+
+.name-modal label {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.password-label {
+  margin-top: 20px;
+}
+
+.name-modal input {
+  width: 100%;
+  height: 55px;
+
+  padding: 0 17px;
+
+  border: 2px solid rgba(255, 255, 255, 0.17);
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 18px;
+
+  outline: none;
+
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.name-modal input::placeholder {
+  color: #929292;
+}
+
+.name-modal input:focus {
+  border-color: #ffd166;
+
+  background: rgba(255, 255, 255, 0.11);
+
+  box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.13);
+}
+
+/* ===================================================== */
+/* ====================== NAME ERROR =================== */
+/* ===================================================== */
+
+.name-error {
+  margin-top: 12px;
+
+  padding: 10px 12px;
+
+  border-radius: 10px;
+
+  background: rgba(255, 80, 80, 0.1);
+
+  color: #ff9b9b;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  text-align: left;
+}
+
+/* ===================================================== */
+/* ================= START GAME BUTTON ================= */
+/* ===================================================== */
+
+.start-game-button {
+  width: 100%;
+  height: 56px;
+
+  margin-top: 22px;
+
+  border: none;
+  border-radius: 14px;
+
+  background: #ffd166;
+  color: #111111;
+
+  font-family: inherit;
+  font-size: 19px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.start-game-button:hover {
+  background: #ffdc89;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 24px rgba(255, 209, 102, 0.25);
+}
+
+.start-game-button:active {
+  transform: translateY(0);
+}
+
+.start-game-button:focus-visible {
+  outline: 4px solid rgba(255, 209, 102, 0.35);
+  outline-offset: 4px;
+}
+
+/* ===================================================== */
+/* ====================== TABLET ======================= */
+/* ===================================================== */
+
+@media (max-width: 992px) {
+  .games-grid {
+    grid-template-columns: repeat(2, minmax(230px, 1fr));
+  }
+
+  .games-title {
+    font-size: 58px;
+  }
+}
+
+/* ===================================================== */
+/* ======================= MOBILE ====================== */
+/* ===================================================== */
+
+@media (max-width: 650px) {
+  .games-page {
+    padding: 55px 18px 120px;
+  }
+
+  .games-title {
+    font-size: 45px;
+  }
+
+  .games-subtitle {
+    margin-bottom: 38px;
+
+    font-size: 20px;
+  }
+
+  .games-grid {
+    grid-template-columns: 1fr;
+
+    gap: 28px;
+  }
+
+  .game-card {
+    max-width: 360px;
+
+    margin: 0 auto;
+  }
+
+  .game-card-image,
+  .all-types-images {
+    height: 250px;
+  }
+
+  .game-card-name {
+    min-height: 80px;
+
+    font-size: 20px;
+  }
+
+  .name-modal-overlay {
+    align-items: flex-start;
+
+    overflow-y: auto;
+
+    padding-top: 35px;
+    padding-bottom: 35px;
+  }
+
+  .name-modal {
+    padding: 40px 23px 30px;
+  }
+
+  .name-modal h2 {
+    font-size: 29px;
+  }
+
+  .name-modal p {
+    font-size: 16px;
+  }
+
+  .name-modal input {
+    height: 52px;
+
+    font-size: 16px;
+  }
+
+  .games-back-button {
+    left: 20px;
+    bottom: 20px;
+
+    width: 52px;
+    height: 52px;
+
+    font-size: 28px;
+  }
+}
+.question-packages-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.question-package-button {
+  min-height: 115px;
+}
+
+.package-modal {
+  padding: 40px 20px 30px;
+}
+
+.package-modal h2 {
+  font-size: 28px;
+}
+
+.quiz-progress-information {
+  align-items: flex-start;
+}
+
+.result-actions {
+  flex-direction: column;
+}
+
+.restart-quiz-button,
+.choose-package-button,
+.return-games-button {
+  width: 100%;
+}
+
+/* ===================================================== */
+/* ==================== SMALL PHONES =================== */
+/* ===================================================== */
+
+@media (max-width: 420px) {
+  .games-title {
+    font-size: 38px;
+  }
+
+  .games-subtitle {
+    font-size: 18px;
+  }
+
+  .game-card-image,
+  .all-types-images {
+    height: 220px;
+  }
+
+  .name-modal {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .name-modal h2 {
+    font-size: 27px;
+  }
+
+  .modal-game-title {
+    max-width: 85%;
+
+    font-size: 13px;
+  }
+}
+/* ===================================================== */
+/* ================= PACKAGE MODAL OVERLAY ============= */
+/* ===================================================== */
+
+.package-modal-overlay {
+  position: fixed;
+  inset: 0;
+  padding: 25px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2500;
+  overflow-y: auto;
+}
+
+/* ===================================================== */
+/* ==================== PACKAGE MODAL ================== */
+/* ===================================================== */
+
+.package-modal {
+  width: 100%;
+  max-width: 720px;
+  padding: 45px 40px 38px;
+  background: #1c1c1c;
+  border: 2px solid rgba(255, 209, 102, 0.75);
+  border-radius: 30px;
+  color: #ffffff;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 25px 75px rgba(0, 0, 0, 0.65);
+  animation: modalAppear 0.25s ease;
+}
+
+.package-modal h2 {
+  margin: 5px 0 8px;
+  color: #ffd166;
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.package-modal h3 {
+  margin: 0 0 16px;
+  color: #ffffff;
+  font-size: 25px;
+}
+
+.package-modal p {
+  margin: 0 auto 30px;
+  max-width: 530px;
+  color: #d3d3d3;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+/* ===================================================== */
+/* ================= QUESTION PACKAGES ================= */
+/* ===================================================== */
+
+.question-packages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.question-package-button {
+  min-height: 130px;
+  padding: 18px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.question-package-button span {
+  color: #ffd166;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.question-package-button small {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.question-package-button:hover {
+  transform: translateY(-6px);
+  border-color: #ffd166;
+  background: rgba(255, 209, 102, 0.14);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.package-back-button {
+  margin-top: 26px;
+  min-width: 180px;
+  height: 50px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.11);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* ===================================================== */
+/* ================= ANSWERED COUNTER ================== */
+/* ===================================================== */
+
+.quiz-progress-information {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.answered-counter {
+  color: #d3d3d3;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ===================================================== */
+/* ================ RESULT EXTRA BUTTON =============== */
+/* ===================================================== */
+
+.choose-package-button {
+  min-width: 190px;
+  height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(255, 209, 102, 0.16);
+  color: #ffd166;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}

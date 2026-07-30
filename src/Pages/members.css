@@ -1,0 +1,259 @@
+.members-page {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #bfbfbf, #8f8f8f);
+  padding: 80px 30px;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.members-title {
+  text-align: center;
+  font-size: 70px;
+  font-weight: 900;
+  color: black;
+  margin-bottom: 60px;
+}
+
+.members-grid {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 35px;
+  flex-wrap: wrap;
+}
+
+.member-card {
+  width: 300px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.member-card:hover {
+  transform: translateY(-8px);
+}
+
+.member-image {
+  width: 300px;
+  height: 300px;
+  object-fit: contain;
+  background: rgba(15, 15, 15, 0.85);
+  border-radius: 24px;
+  padding: 10px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+}
+
+.member-description {
+  margin-top: 18px;
+  background: rgba(20, 20, 20, 0.85);
+  color: #ffd166;
+  padding: 16px 14px;
+  border-radius: 18px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.6;
+  text-align: center;
+  min-height: 90px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.detail-view {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  cursor: pointer;
+  padding-bottom: 100px;
+}
+
+.detail-content {
+  display: flex;
+  align-items: center;
+  gap: 50px;
+  margin-left: 80px;
+}
+
+.detail-image {
+  width: 430px;
+  height: 430px;
+  object-fit: contain;
+  background: rgba(15, 15, 15, 0.85);
+  padding: 12px;
+  border-radius: 28px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.45);
+}
+
+.testing-box {
+  width: 560px;
+  max-height: 470px;
+  background: rgba(20, 20, 20, 0.88);
+  border: 2px solid rgba(255, 209, 102, 0.7);
+  border-radius: 24px;
+  color: #ffd166;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.9;
+  text-align: right;
+  padding: 30px;
+  overflow-y: auto;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+}
+
+.testing-box p {
+  margin: 0;
+}
+
+.back-arrow {
+  position: fixed;
+  left: 28px;
+  bottom: 28px;
+  width: 58px;
+  height: 58px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.9);
+  color: #ffd166;
+  font-size: 32px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+.back-arrow:hover {
+  background: #ffd166;
+  color: #111;
+  transform: translateX(-5px);
+}
+
+@media (max-width: 992px) {
+  .members-title {
+    font-size: 56px;
+  }
+
+  .member-card {
+    width: 260px;
+  }
+
+  .member-image {
+    width: 260px;
+    height: 260px;
+  }
+
+  .member-description {
+    font-size: 18px;
+  }
+
+  .detail-content {
+    margin-left: 30px;
+    gap: 30px;
+  }
+
+  .detail-image {
+    width: 350px;
+    height: 350px;
+  }
+
+  .testing-box {
+    width: 430px;
+    max-height: 420px;
+    font-size: 20px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .members-page {
+    padding: 60px 18px;
+  }
+
+  .members-title {
+    font-size: 46px;
+    margin-bottom: 40px;
+  }
+
+  .members-grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 35px;
+  }
+
+  .member-card {
+    width: 300px;
+  }
+
+  .member-image {
+    width: 300px;
+    height: 300px;
+  }
+
+  .detail-view {
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 50px;
+    padding-bottom: 120px;
+  }
+
+  .detail-content {
+    margin-left: 0;
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .detail-image {
+    width: 320px;
+    height: 320px;
+  }
+
+  .testing-box {
+    width: 90%;
+    max-width: 340px;
+    max-height: 360px;
+    font-size: 18px;
+    padding: 22px;
+  }
+
+  .back-arrow {
+  position: fixed;
+  left: 25px;
+  bottom: 25px;
+
+  width: 60px;
+  height: 60px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(20, 20, 20, 0.9);
+
+  color: #ffd166;
+
+  font-size: 34px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+
+  transition: all 0.3s ease;
+
+  z-index: 999;
+}
+
+.back-arrow:hover {
+  background: #ffd166;
+  color: #111;
+  transform: translateX(-5px);
+}
+}
