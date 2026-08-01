@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "./games.css";
+import { supabase } from "../lib/supabase";
 
 import engineeringImage from "../assets/Engineering.jpg";
 import chemistryImage from "../assets/chemistry.jpg";
@@ -12,6 +13,28 @@ import chemistryQuestionsImport from "../data/questions/chemistryQuestions.js";
 import pharmaceuticalQuestionsImport from "../data/questions/pharmaceuticalQuestions.js";
 import surveyingQuestionsImport from "../data/questions/surveyingQuestions.js";
 
+const USERS = [
+  {
+    username: "Hamed",
+    arabicName: "الجامد",
+    password: "Abc123",
+  },
+  {
+    username: "Adel",
+    arabicName: "المزور",
+    password: "Abc1234",
+  },
+  {
+    username: "Fahmy",
+    arabicName: "ابو جللابية",
+    password: "Abc12345",
+  },
+  {
+    username: "Naguib",
+    arabicName: "الغبي",
+    password: "Abc123456",
+  },
+];
 /*
   This helper ensures that each imported question bank
   is converted into a valid array.
@@ -62,6 +85,45 @@ const QUESTION_BANKS = {
 };
 
 const QUESTION_PACKAGES = [10, 20, 40, 60, 80, 100];
+const COMPETITION_SESSION_KEY = "joules-competition-session";
+const COMPETITION_LAUNCH_KEY = "joules-launch-competition";
+
+function readCompetitionSession() {
+  try {
+    const shouldLaunch =
+      localStorage.getItem(
+        COMPETITION_LAUNCH_KEY
+      ) === "true";
+
+    if (!shouldLaunch) {
+      return null;
+    }
+
+    const savedSession = localStorage.getItem(
+      COMPETITION_SESSION_KEY
+    );
+
+    /*
+      Consume the one-time launch flag immediately.
+      This prevents a normal visit to Games from starting
+      an old competition session again.
+    */
+    localStorage.removeItem(
+      COMPETITION_LAUNCH_KEY
+    );
+
+    return savedSession
+      ? JSON.parse(savedSession)
+      : null;
+  } catch (error) {
+    console.error(
+      "Unable to read the competition session:",
+      error
+    );
+
+    return null;
+  }
+}
 
 const GAMES = [
   {
@@ -101,6 +163,21 @@ const GAMES = [
 ];
 
 function Games() {
+  const [competitionSession] = useState(
+    readCompetitionSession
+  );
+
+  const competitionStartedRef = useRef(false);
+
+  const [resultSubmissionStatus, setResultSubmissionStatus] =
+    useState("");
+
+  const [competitionRoomState, setCompetitionRoomState] =
+    useState(null);
+
+  const [isWaitingForLeaderboard, setIsWaitingForLeaderboard] =
+    useState(false);
+
   const [selectedGame, setSelectedGame] = useState(null);
 
   const [playerName, setPlayerName] = useState("");
@@ -289,20 +366,12 @@ function Games() {
   const handleLoginSubmit = (event) => {
     event.preventDefault();
 
-    const trimmedName = playerName.trim();
+    const selectedUser = USERS.find(
+      (user) => user.username === playerName
+    );
 
-    const englishNamePattern =
-      /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/;
-
-    if (!trimmedName) {
-      setFormError("Please enter your name.");
-      return;
-    }
-
-    if (!englishNamePattern.test(trimmedName)) {
-      setFormError(
-        "Please enter your name using English letters only."
-      );
+    if (!selectedUser) {
+      setFormError("Please select a player.");
       return;
     }
 
@@ -311,10 +380,15 @@ function Games() {
       return;
     }
 
-    if (password.length < 4) {
+    if (password !== selectedUser.password) {
       setFormError(
-        "Password must contain at least 4 characters."
+        "The selected player and password do not match."
       );
+      return;
+    }
+
+    if (!selectedGame) {
+      setFormError("Please select a game category.");
       return;
     }
 
@@ -328,7 +402,7 @@ function Games() {
       return;
     }
 
-    setPlayerName(trimmedName);
+    setPlayerName(selectedUser.username);
     setFormError("");
     setShowPackageSelection(true);
   };
@@ -400,7 +474,30 @@ function Games() {
     }
   };
 
-  const handleSubmitQuiz = () => {
+  const loadCompetitionRoomState = async () => {
+    if (!competitionSession) {
+      return null;
+    }
+
+    const { data, error } = await supabase.rpc(
+      "get_competition_room_state",
+      {
+        p_room_code: competitionSession.roomCode,
+        p_player_token:
+          competitionSession.playerToken,
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    setCompetitionRoomState(data);
+
+    return data;
+  };
+
+  const handleSubmitQuiz = async () => {
     if (
       selectedAnswers[currentQuestionIndex] === undefined
     ) {
@@ -421,6 +518,57 @@ function Games() {
     );
 
     setFinalScore(calculatedScore);
+
+    if (competitionSession) {
+      setResultSubmissionStatus("Submitting result...");
+
+      const { data, error } = await supabase.rpc(
+        "submit_quiz_result",
+        {
+          p_room_code: competitionSession.roomCode,
+          p_player_token:
+            competitionSession.playerToken,
+          p_real_score: calculatedScore,
+        }
+      );
+
+      if (error) {
+        console.error(
+          "Competition result submission error:",
+          error
+        );
+
+        setFormError(error.message);
+        setResultSubmissionStatus(
+          "The result could not be submitted."
+        );
+        return;
+      }
+
+      const playersFinished =
+        data?.playersFinished || 1;
+
+      const playerCount =
+        data?.playerCount || playersFinished;
+
+      setResultSubmissionStatus(
+        data?.allPlayersFinished
+          ? "All players have finished. Loading the final leaderboard..."
+          : `Result submitted. ${playersFinished} of ${playerCount} players have finished.`
+      );
+
+      setIsWaitingForLeaderboard(true);
+
+      try {
+        await loadCompetitionRoomState();
+      } catch (roomError) {
+        console.error(
+          "Unable to load competition room state:",
+          roomError
+        );
+      }
+    }
+
     setQuizCompleted(true);
   };
 
@@ -461,6 +609,128 @@ function Games() {
     setFormError("");
   };
 
+  useEffect(() => {
+    if (
+      !competitionSession ||
+      competitionStartedRef.current
+    ) {
+      return;
+    }
+
+    const assignedGame = GAMES.find(
+      (game) =>
+        game.type ===
+        competitionSession.selectedCategory
+    );
+
+    if (!assignedGame) {
+      setFormError(
+        "The assigned competition category is not valid."
+      );
+      return;
+    }
+
+    try {
+      const generatedRound = createRandomRound(
+        assignedGame.type,
+        Number(competitionSession.packageSize)
+      );
+
+      competitionStartedRef.current = true;
+
+      setSelectedGame(assignedGame);
+      setPlayerName(competitionSession.playerName);
+      setPassword("");
+      setSelectedPackageSize(
+        Number(competitionSession.packageSize)
+      );
+
+      setRoundQuestions(generatedRound);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswers({});
+
+      setQuizCompleted(false);
+      setFinalScore(0);
+      setFormError("");
+      setResultSubmissionStatus("");
+      setCompetitionRoomState(null);
+      setIsWaitingForLeaderboard(false);
+
+      setShowPackageSelection(false);
+      setQuizStarted(true);
+    } catch (error) {
+      console.error(
+        "Unable to start competition quiz:",
+        error
+      );
+
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Unable to start the competition quiz."
+      );
+    }
+  }, [competitionSession]);
+
+  useEffect(() => {
+    if (
+      !competitionSession ||
+      !quizCompleted ||
+      !isWaitingForLeaderboard
+    ) {
+      return undefined;
+    }
+
+    let isMounted = true;
+    let requestInProgress = false;
+
+    const refreshLeaderboard = async () => {
+      if (!isMounted || requestInProgress) {
+        return;
+      }
+
+      requestInProgress = true;
+
+      try {
+        const latestRoomState =
+          await loadCompetitionRoomState();
+
+        if (
+          latestRoomState?.room?.status === "finished"
+        ) {
+          setIsWaitingForLeaderboard(false);
+
+          setResultSubmissionStatus(
+            "Final competition results are ready."
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Leaderboard refresh error:",
+          error
+        );
+      } finally {
+        requestInProgress = false;
+      }
+    };
+
+    refreshLeaderboard();
+
+    const intervalId = window.setInterval(
+      refreshLeaderboard,
+      2000
+    );
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [
+    competitionSession,
+    quizCompleted,
+    isWaitingForLeaderboard,
+  ]);
+
   const currentQuestion =
     roundQuestions[currentQuestionIndex];
 
@@ -476,16 +746,30 @@ function Games() {
 
   const selectedBankSize = getSelectedBankSize();
 
+  const competitionFinished =
+    competitionRoomState?.room?.status === "finished";
+
+  const finalLeaderboard = competitionFinished
+    ? [...(competitionRoomState?.players || [])].sort(
+        (firstPlayer, secondPlayer) =>
+          (firstPlayer.finalRank || 99) -
+          (secondPlayer.finalRank || 99)
+      )
+    : [];
+
   return (
     <div className="games-page">
-      <Link
-        to="/"
-        className="games-back-button"
-        aria-label="Back to home page"
-      >
-        ←
-      </Link>
+      {!competitionSession && (
+        <Link
+          to="/"
+          className="games-back-button"
+          aria-label="Back to home page"
+        >
+          ←
+        </Link>
+      )}
 
+      {!competitionSession && (
       <main className="games-content">
         <h1 className="games-title">
           العاب ومسابقات
@@ -545,10 +829,44 @@ function Games() {
               </div>
             </button>
           ))}
+
+          <Link
+            to="/room-test"
+            className="game-card"
+            style={{ textDecoration: "none" }}
+            aria-label="Create or join a group competition room"
+          >
+            <div
+              style={{
+                height: "260px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background:
+                  "linear-gradient(135deg, #2a2a2a, #111111)",
+                fontSize: "88px",
+              }}
+            >
+              👥
+            </div>
+
+            <div className="game-card-name">
+              <span>Create or Join Room</span>
+
+              <span
+                className="game-card-arabic-name"
+                dir="rtl"
+              >
+                إنشاء أو الانضمام إلى غرفة
+              </span>
+            </div>
+          </Link>
         </div>
       </main>
+      )}
 
       {selectedGame &&
+        !competitionSession &&
         !quizStarted &&
         !showPackageSelection && (
           <div
@@ -586,23 +904,32 @@ function Games() {
               </p>
 
               <form onSubmit={handleLoginSubmit}>
-                <label htmlFor="player-name">
-                  Player Name
-                </label>
+<label htmlFor="player-name">
+  Player
+</label>
 
-                <input
-                  id="player-name"
-                  type="text"
-                  value={playerName}
-                  onChange={(event) => {
-                    setPlayerName(event.target.value);
-                    setFormError("");
-                  }}
-                  placeholder="Example: Mahmoud"
-                  autoFocus
-                  autoComplete="name"
-                  maxLength={40}
-                />
+<select
+  id="player-name"
+  value={playerName}
+  onChange={(event) => {
+    setPlayerName(event.target.value);
+    setFormError("");
+  }}
+  autoFocus
+>
+  <option value="">
+    Select Player...
+  </option>
+
+  {USERS.map((user) => (
+    <option
+      key={user.username}
+      value={user.username}
+    >
+      {user.username} / {user.arabicName}
+    </option>
+  ))}
+</select>
 
                 <label
                   htmlFor="player-password"
@@ -642,6 +969,7 @@ function Games() {
         )}
 
       {selectedGame &&
+        !competitionSession &&
         showPackageSelection &&
         !quizStarted && (
           <div
@@ -744,14 +1072,16 @@ function Games() {
         currentQuestion && (
           <div className="quiz-modal-overlay">
             <div className="quiz-modal">
-              <button
-                type="button"
-                className="quiz-close-button"
-                onClick={closeAllPopups}
-                aria-label="Close quiz"
-              >
-                ×
-              </button>
+              {!competitionSession && (
+                <button
+                  type="button"
+                  className="quiz-close-button"
+                  onClick={closeAllPopups}
+                  aria-label="Close quiz"
+                >
+                  ×
+                </button>
+              )}
 
               <div className="quiz-top-section">
                 <div>
@@ -766,6 +1096,12 @@ function Games() {
                   <h2 className="quiz-player-name">
                     Player: {playerName}
                   </h2>
+
+                  {competitionSession && (
+                    <p className="competition-room-code">
+                      Room: {competitionSession.roomCode}
+                    </p>
+                  )}
                 </div>
 
                 <div className="quiz-progress-information">
@@ -796,6 +1132,56 @@ function Games() {
               </div>
 
               <div className="quiz-question-section">
+                <div className="question-information">
+                  <div className="question-information-item">
+                    <span className="question-information-label">
+                      Domain
+                    </span>
+
+                    <span className="question-information-value">
+                      {currentQuestion.domain || "Not specified"}
+                    </span>
+                  </div>
+
+                  <div className="question-information-item">
+                    <span className="question-information-label">
+                      Course
+                    </span>
+
+                    <span className="question-information-value">
+                      {currentQuestion.course || "Not specified"}
+                    </span>
+                  </div>
+
+                  <div className="question-information-item">
+                    <span className="question-information-label">
+                      Topic
+                    </span>
+
+                    <span className="question-information-value">
+                      {currentQuestion.topic || "Not specified"}
+                    </span>
+                  </div>
+
+                  <div className="question-information-item">
+                    <span className="question-information-label">
+                      Difficulty
+                    </span>
+
+                    <span
+                      className={`question-difficulty difficulty-${
+                        currentQuestion.difficulty
+                          ?.toLowerCase()
+                          .replace(/\s+/g, "-") ||
+                        "unknown"
+                      }`}
+                    >
+                      {currentQuestion.difficulty ||
+                        "Not specified"}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="bilingual-question">
                   <h3 className="question-english">
                     {currentQuestion.questionEnglish}
@@ -891,42 +1277,52 @@ function Games() {
       {selectedGame && quizCompleted && (
         <div className="quiz-modal-overlay">
           <div className="quiz-result-modal">
-            <button
-              type="button"
-              className="quiz-close-button"
-              onClick={closeAllPopups}
-              aria-label="Close results"
-            >
-              ×
-            </button>
+            {!competitionSession && (
+              <button
+                type="button"
+                className="quiz-close-button"
+                onClick={closeAllPopups}
+                aria-label="Close results"
+              >
+                ×
+              </button>
+            )}
 
             <div className="result-icon">🏆</div>
 
-            <h2>Quiz Completed</h2>
+            <h2>
+              {competitionSession
+                ? "Competition Result"
+                : "Quiz Completed"}
+            </h2>
 
             <p className="result-player">
               Well done, {playerName}!
             </p>
 
-            <div className="result-score">
-              <span>{finalScore}</span>
+            {!competitionSession && (
+              <>
+                <div className="result-score">
+                  <span>{finalScore}</span>
 
-              <small>
-                out of {roundQuestions.length}
-              </small>
-            </div>
+                  <small>
+                    out of {roundQuestions.length}
+                  </small>
+                </div>
 
-            <p className="result-percentage">
-              Score:{" "}
-              {roundQuestions.length > 0
-                ? Math.round(
-                    (finalScore /
-                      roundQuestions.length) *
-                      100
-                  )
-                : 0}
-              %
-            </p>
+                <p className="result-percentage">
+                  Score:{" "}
+                  {roundQuestions.length > 0
+                    ? Math.round(
+                        (finalScore /
+                          roundQuestions.length) *
+                          100
+                      )
+                    : 0}
+                  %
+                </p>
+              </>
+            )}
 
             {formError && (
               <div className="name-error">
@@ -934,31 +1330,210 @@ function Games() {
               </div>
             )}
 
-            <div className="result-actions">
-              <button
-                type="button"
-                className="restart-quiz-button"
-                onClick={restartWithNewQuestions}
-              >
-                New Random Round
-              </button>
+            {competitionSession ? (
+              <div className="competition-result-status">
+                {!competitionFinished ? (
+                  <div
+                    style={{
+                      padding: "18px",
+                      borderRadius: "14px",
+                      background:
+                        "rgba(255, 209, 102, 0.1)",
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#ffd166",
+                        fontWeight: "900",
+                      }}
+                    >
+                      {resultSubmissionStatus ||
+                        "Your result has been submitted."}
+                    </p>
 
-              <button
-                type="button"
-                className="choose-package-button"
-                onClick={chooseAnotherPackage}
-              >
-                Choose Another Package
-              </button>
+                    <p
+                      style={{
+                        margin: "10px 0 0",
+                        color: "#d3d3d3",
+                      }}
+                    >
+                      Please wait for the remaining players.
+                      This page updates automatically.
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      marginTop: "18px",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        color: "#ffd166",
+                        fontSize: "27px",
+                        marginBottom: "18px",
+                      }}
+                    >
+                      Final Leaderboard
+                    </h3>
 
-              <button
-                type="button"
-                className="return-games-button"
-                onClick={closeAllPopups}
-              >
-                Return to Games
-              </button>
-            </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: "12px",
+                      }}
+                    >
+                      {finalLeaderboard.map((player) => (
+                        <div
+                          key={player.id}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "70px minmax(150px, 1fr) minmax(130px, auto)",
+                            alignItems: "center",
+                            gap: "14px",
+                            padding: "15px 18px",
+                            borderRadius: "14px",
+                            background:
+                              player.playerName ===
+                              competitionSession.playerName
+                                ? "rgba(255, 209, 102, 0.18)"
+                                : "rgba(255, 255, 255, 0.07)",
+                            border:
+                              player.playerName ===
+                              competitionSession.playerName
+                                ? "1px solid rgba(255, 209, 102, 0.65)"
+                                : "1px solid rgba(255, 255, 255, 0.1)",
+                            textAlign: "left",
+                          }}
+                        >
+                          <strong
+                            style={{
+                              color: "#ffd166",
+                              fontSize: "22px",
+                            }}
+                          >
+                            #{player.finalRank}
+                          </strong>
+
+                          <div>
+                            <strong
+                              style={{
+                                display: "block",
+                                color: "#ffffff",
+                                fontSize: "18px",
+                              }}
+                            >
+                              {player.playerName}
+                            </strong>
+
+                            <small
+                              style={{
+                                color: "#cfcfcf",
+                              }}
+                            >
+                              {player.selectedCategory} ·{" "}
+                              {player.packageSize} questions
+                            </small>
+                          </div>
+
+                          <div
+                            style={{
+                              textAlign: "right",
+                            }}
+                          >
+                            <strong
+                              style={{
+                                display: "block",
+                                color: "#ffd166",
+                                fontSize: "20px",
+                              }}
+                            >
+                              {player.displayedScore}/
+                              {player.packageSize}
+                            </strong>
+
+                            <small
+                              style={{
+                                color: "#cfcfcf",
+                              }}
+                            >
+                              {Number(
+                                player.displayedPercentage || 0
+                              ).toFixed(2)}
+                              %
+                            </small>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    gap: "12px",
+                    marginTop: "22px",
+                  }}
+                >
+                  {!competitionFinished && (
+                    <button
+                      type="button"
+                      className="choose-package-button"
+                      onClick={async () => {
+                        try {
+                          await loadCompetitionRoomState();
+                        } catch (error) {
+                          setFormError(
+                            error?.message ||
+                              "Unable to refresh the competition."
+                          );
+                        }
+                      }}
+                    >
+                      Refresh Results
+                    </button>
+                  )}
+
+                  <Link
+                    to="/room-test"
+                    className="return-games-button"
+                  >
+                    Return to Competition Room
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="result-actions">
+                <button
+                  type="button"
+                  className="restart-quiz-button"
+                  onClick={restartWithNewQuestions}
+                >
+                  New Random Round
+                </button>
+
+                <button
+                  type="button"
+                  className="choose-package-button"
+                  onClick={chooseAnotherPackage}
+                >
+                  Choose Another Package
+                </button>
+
+                <button
+                  type="button"
+                  className="return-games-button"
+                  onClick={closeAllPopups}
+                >
+                  Return to Games
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
