@@ -198,6 +198,8 @@ function Games() {
 
   const [selectedAnswers, setSelectedAnswers] = useState({});
 
+  const [submittedAnswers, setSubmittedAnswers] = useState({});
+
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
 
@@ -260,17 +262,58 @@ function Games() {
     };
   };
 
+  const QUESTION_BANK_TYPES = [
+    "engineering",
+    "chemistry",
+    "pharmaceuticals",
+    "surveying",
+  ];
+
+  const getValidQuestions = (bank) => {
+    if (!Array.isArray(bank)) {
+      return [];
+    }
+
+    return bank.filter(
+      (question) =>
+        question &&
+        question.id !== undefined &&
+        question.id !== null &&
+        Array.isArray(question.options) &&
+        question.options.length > 0 &&
+        Number.isInteger(question.correctAnswer) &&
+        question.correctAnswer >= 0 &&
+        question.correctAnswer < question.options.length
+    );
+  };
+
   const getBankForSelectedGame = (gameType) => {
     if (gameType === "all") {
-      return [
-        ...QUESTION_BANKS.engineering,
-        ...QUESTION_BANKS.chemistry,
-        ...QUESTION_BANKS.pharmaceuticals,
-        ...QUESTION_BANKS.surveying,
-      ];
+      return QUESTION_BANK_TYPES.flatMap(
+        (bankType) => QUESTION_BANKS[bankType] || []
+      );
     }
 
     return QUESTION_BANKS[gameType] || [];
+  };
+
+  const getBalancedAllTypesCapacity = () => {
+    const validBankSizes = QUESTION_BANK_TYPES.map(
+      (bankType) =>
+        getValidQuestions(
+          QUESTION_BANKS[bankType]
+        ).length
+    );
+
+    if (
+      validBankSizes.some(
+        (bankSize) => bankSize === 0
+      )
+    ) {
+      return 0;
+    }
+
+    return Math.min(...validBankSizes) * 4;
   };
 
   const getSelectedBankSize = () => {
@@ -278,10 +321,98 @@ function Games() {
       return 0;
     }
 
-    return getBankForSelectedGame(selectedGame.type).length;
+    if (selectedGame.type === "all") {
+      return getBalancedAllTypesCapacity();
+    }
+
+    return getValidQuestions(
+      getBankForSelectedGame(
+        selectedGame.type
+      )
+    ).length;
   };
 
-  const createRandomRound = (gameType, packageSize) => {
+  const createBalancedAllTypesRound = (
+    packageSize
+  ) => {
+    const baseQuestionsPerField = Math.floor(
+      packageSize / QUESTION_BANK_TYPES.length
+    );
+
+    const extraQuestionCount =
+      packageSize % QUESTION_BANK_TYPES.length;
+
+    /*
+      Randomize which fields receive the remainder.
+      Example: a 10-question package gives two fields
+      3 questions and the other two fields 2 questions.
+    */
+    const randomizedBankTypes = shuffleArray(
+      QUESTION_BANK_TYPES
+    );
+
+    const selectedQuestions = [];
+
+    randomizedBankTypes.forEach(
+      (bankType, bankIndex) => {
+        const requiredQuestionCount =
+          baseQuestionsPerField +
+          (bankIndex < extraQuestionCount ? 1 : 0);
+
+        const validQuestions = getValidQuestions(
+          QUESTION_BANKS[bankType]
+        );
+
+        if (
+          validQuestions.length <
+          requiredQuestionCount
+        ) {
+          throw new Error(
+            `${bankType} contains only ${validQuestions.length} valid questions, but ${requiredQuestionCount} are required for this balanced package.`
+          );
+        }
+
+        const selectedFromBank = shuffleArray(
+          validQuestions
+        )
+          .slice(0, requiredQuestionCount)
+          .map((question) => ({
+            ...question,
+
+            /*
+              Prefix the ID because different question
+              files may use the same numeric IDs.
+            */
+            id: `${bankType}-${question.id}`,
+            sourceCategory: bankType,
+          }));
+
+        selectedQuestions.push(
+          ...selectedFromBank
+        );
+      }
+    );
+
+    /*
+      Shuffle again so fields are not presented in
+      groups after the equal selection is completed.
+    */
+    return shuffleArray(selectedQuestions).map(
+      (question) =>
+        shuffleQuestionOptions(question)
+    );
+  };
+
+  const createRandomRound = (
+    gameType,
+    packageSize
+  ) => {
+    if (gameType === "all") {
+      return createBalancedAllTypesRound(
+        packageSize
+      );
+    }
+
     const completeBank =
       getBankForSelectedGame(gameType);
 
@@ -297,20 +428,8 @@ function Games() {
       );
     }
 
-    if (completeBank.length < packageSize) {
-      throw new Error(
-        `This category contains only ${completeBank.length} questions. Please select a smaller package.`
-      );
-    }
-
-    const validQuestions = completeBank.filter(
-      (question) =>
-        question &&
-        question.id &&
-        Array.isArray(question.options) &&
-        question.options.length > 0 &&
-        Number.isInteger(question.correctAnswer)
-    );
+    const validQuestions =
+      getValidQuestions(completeBank);
 
     if (validQuestions.length === 0) {
       throw new Error(
@@ -320,16 +439,19 @@ function Games() {
 
     if (validQuestions.length < packageSize) {
       throw new Error(
-        `Only ${validQuestions.length} valid questions are available in this category.`
+        `Only ${validQuestions.length} valid questions are available in this category. Please select a smaller package.`
       );
     }
 
-    const randomlySelectedQuestions = shuffleArray(
-      validQuestions
-    ).slice(0, packageSize);
+    const randomlySelectedQuestions =
+      shuffleArray(validQuestions).slice(
+        0,
+        packageSize
+      );
 
-    return randomlySelectedQuestions.map((question) =>
-      shuffleQuestionOptions(question)
+    return randomlySelectedQuestions.map(
+      (question) =>
+        shuffleQuestionOptions(question)
     );
   };
 
@@ -339,6 +461,7 @@ function Games() {
     setRoundQuestions([]);
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
+    setSubmittedAnswers({});
     setQuizCompleted(false);
     setFinalScore(0);
   };
@@ -423,6 +546,7 @@ function Games() {
       setRoundQuestions(generatedRound);
       setCurrentQuestionIndex(0);
       setSelectedAnswers({});
+      setSubmittedAnswers({});
       setQuizCompleted(false);
       setFinalScore(0);
       setShowPackageSelection(false);
@@ -443,15 +567,43 @@ function Games() {
   };
 
   const handleAnswerSelection = (optionIndex) => {
+    if (
+      !competitionSession &&
+      submittedAnswers[currentQuestionIndex]
+    ) {
+      return;
+    }
+
     setSelectedAnswers((previousAnswers) => ({
       ...previousAnswers,
       [currentQuestionIndex]: optionIndex,
     }));
   };
 
+  const handleSubmitAnswer = () => {
+    if (
+      competitionSession ||
+      selectedAnswers[currentQuestionIndex] === undefined
+    ) {
+      return;
+    }
+
+    setSubmittedAnswers((previousAnswers) => ({
+      ...previousAnswers,
+      [currentQuestionIndex]: true,
+    }));
+  };
+
   const handleNextQuestion = () => {
     if (
       selectedAnswers[currentQuestionIndex] === undefined
+    ) {
+      return;
+    }
+
+    if (
+      !competitionSession &&
+      !submittedAnswers[currentQuestionIndex]
     ) {
       return;
     }
@@ -586,6 +738,7 @@ function Games() {
       setRoundQuestions(generatedRound);
       setCurrentQuestionIndex(0);
       setSelectedAnswers({});
+      setSubmittedAnswers({});
       setQuizCompleted(false);
       setFinalScore(0);
       setFormError("");
@@ -603,6 +756,7 @@ function Games() {
     setQuizStarted(false);
     setRoundQuestions([]);
     setSelectedAnswers({});
+    setSubmittedAnswers({});
     setCurrentQuestionIndex(0);
     setSelectedPackageSize(null);
     setShowPackageSelection(true);
@@ -740,6 +894,16 @@ function Games() {
 
   const hasSelectedAnswer =
     selectedAnswers[currentQuestionIndex] !== undefined;
+
+  const currentAnswerSubmitted =
+    Boolean(submittedAnswers[currentQuestionIndex]);
+
+  const selectedOptionIndex =
+    selectedAnswers[currentQuestionIndex];
+
+  const currentAnswerIsCorrect =
+    currentQuestion &&
+    selectedOptionIndex === currentQuestion.correctAnswer;
 
   const answeredQuestionsCount =
     Object.keys(selectedAnswers).length;
@@ -1207,11 +1371,35 @@ function Games() {
                           ] === optionIndex
                             ? "selected"
                             : ""
+                        } ${
+                          !competitionSession &&
+                          currentAnswerSubmitted &&
+                          optionIndex ===
+                            currentQuestion.correctAnswer
+                            ? "correct"
+                            : ""
+                        } ${
+                          !competitionSession &&
+                          currentAnswerSubmitted &&
+                          optionIndex === selectedOptionIndex &&
+                          optionIndex !==
+                            currentQuestion.correctAnswer
+                            ? "wrong"
+                            : ""
+                        } ${
+                          !competitionSession &&
+                          currentAnswerSubmitted
+                            ? "locked"
+                            : ""
                         }`}
                         onClick={() =>
                           handleAnswerSelection(
                             optionIndex
                           )
+                        }
+                        disabled={
+                          !competitionSession &&
+                          currentAnswerSubmitted
                         }
                       >
                         <span className="option-letter">
@@ -1236,6 +1424,45 @@ function Games() {
                     )
                   )}
                 </div>
+
+                {!competitionSession &&
+                  currentAnswerSubmitted && (
+                    <div
+                      className={`answer-feedback ${
+                        currentAnswerIsCorrect
+                          ? "correct-feedback"
+                          : "wrong-feedback"
+                      }`}
+                    >
+                      <h4>
+                        {currentAnswerIsCorrect
+                          ? "✅ Correct Answer"
+                          : "❌ Wrong Answer"}
+                      </h4>
+
+                      {!currentAnswerIsCorrect && (
+                        <>
+                          <p>
+                            <strong>Correct answer:</strong>{" "}
+                            {
+                              currentQuestion.options[
+                                currentQuestion.correctAnswer
+                              ].english
+                            }
+                          </p>
+
+                          <p dir="rtl">
+                            <strong>الإجابة الصحيحة:</strong>{" "}
+                            {
+                              currentQuestion.options[
+                                currentQuestion.correctAnswer
+                              ].arabic
+                            }
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
               </div>
 
               <div className="quiz-navigation">
@@ -1250,12 +1477,40 @@ function Games() {
                   Previous
                 </button>
 
-                {!isLastQuestion ? (
+                {competitionSession ? (
+                  !isLastQuestion ? (
+                    <button
+                      type="button"
+                      className="next-question-button"
+                      onClick={handleNextQuestion}
+                      disabled={!hasSelectedAnswer}
+                    >
+                      Next Question
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="submit-quiz-button"
+                      onClick={handleSubmitQuiz}
+                      disabled={!hasSelectedAnswer}
+                    >
+                      Submit Answers
+                    </button>
+                  )
+                ) : !currentAnswerSubmitted ? (
+                  <button
+                    type="button"
+                    className="submit-answer-button"
+                    onClick={handleSubmitAnswer}
+                    disabled={!hasSelectedAnswer}
+                  >
+                    Submit Answer
+                  </button>
+                ) : !isLastQuestion ? (
                   <button
                     type="button"
                     className="next-question-button"
                     onClick={handleNextQuestion}
-                    disabled={!hasSelectedAnswer}
                   >
                     Next Question
                   </button>
@@ -1264,9 +1519,8 @@ function Games() {
                     type="button"
                     className="submit-quiz-button"
                     onClick={handleSubmitQuiz}
-                    disabled={!hasSelectedAnswer}
                   >
-                    Submit Answers
+                    Finish Quiz
                   </button>
                 )}
               </div>
